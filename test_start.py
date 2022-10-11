@@ -84,31 +84,36 @@ def slic_seg(images,seg_data,compactness,threshold,mode,segs):
                                    weight_func=_weight_mean_color)
 
     labels = labels_i
-    fig, (ax_img, ax_slic, ax_seg) = plt.subplots(1, 3, figsize = (36, 12))
+    blank_image = 255 * np.ones_like(img , dtype = np.uint8)
+    fig, (ax_img, ax_slic, ax_seg,ax_graph) = plt.subplots(1, 4, figsize = (36, 12))
     ax_img.imshow(img)
-    ax_slic.imshow(img)
     ax_slic.imshow(labels)#, cmap = plt.cm.BrBG)
+    ax_slic.imshow(img)
     out = color.label2rgb(labels, img, kind='avg', bg_label=0)
     out = segmentation.mark_boundaries(out, labels, (0, 0, 0))
-    #ax_seg.imshow(seg[:,:])
+    #ax_seg.imshow(seg[:,:]) #remove it later
+    ax_seg.imshow(labels)
     ax_seg.imshow(out)
+    ax_graph.imshow(blank_image)
 
     pos_info = {c.label-1: np.array([c.centroid[1],c.centroid[0]]) for c in regionprops(labels_i+1)}
-    nx.draw(rag, pos = pos_info, ax = ax_slic,node_size=0.5)#, node_color='r', edge_color='b', alpha=0.5, width=0.1)
-    #plt.show()
+    nx.draw(rag, pos = pos_info, ax = ax_slic,node_size=0.5)#, node_color='r', edge_color='b', alpha=0.5, width=1)
+    nx.draw(rag, pos = pos_info, ax = ax_seg,node_size=0.5, node_color='r', edge_color='b', alpha=0.5, width=0.2)
+    nx.draw(rag, pos = pos_info, ax = ax_graph, node_size = 0.5, edge_color='b', alpha=0.5, width=0.2)
+    plt.show()
 
 
 
 def run_experiments():
     img_data,seg_data,anno_data = read_image()
-    for segi,segs in enumerate([250,300,350,400,450,500,600,700,800,900,1000]):
-        for modei,mode in enumerate(['distance']):
-            for comi,comp in enumerate([10,30,35,40]):
-                for thresi,thres in enumerate([1]):
-                    print("for compactness = ",comp," and threshold = ",thres," and mode = ",mode," and segs = ",segs)
-                    slic_seg(img_data,seg_data,comp,thres,mode,segs)
-                    plt.savefig('results/{}_{}_{}_{}.png'.format(segs,comp,thres,mode))
-                    plt.close()
+    #for segi,segs in enumerate([250,300,350,400,450,500,600,700,800,900,1000]):
+    #    for modei,mode in enumerate(['distance']):
+    #        for comi,comp in enumerate([10,30,35,40]):
+    #            for thresi,thres in enumerate([1]):
+    #                print("for compactness = ",comp," and threshold = ",thres," and mode = ",mode," and segs = ",segs)
+    slic_seg(img_data,seg_data,30,1,'distance',300)
+    #                plt.savefig('results/{}_{}_{}_{}.png'.format(segs,comp,thres,mode))
+    #                plt.close()
 
 if __name__ == '__main__':
     img_data,seg_data,anno_data = read_image()
