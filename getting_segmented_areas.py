@@ -27,23 +27,24 @@ rag = graph.rag_mean_color(image, segments,mode='distance')
 
 
 # this part is for visualization from image to graph
-# fig, (ax_img, ax_slic, ax_seg,ax_graph) = plt.subplots(1, 4, figsize = (36, 12))
-# ax_img.imshow(image)
-# ax_slic.imshow(segments)#, cmap = plt.cm.BrBG)
-# ax_slic.imshow(image)
-# out = color.label2rgb(segments, image, kind='avg', bg_label=0)
-# #out = segmentation.mark_boundaries(out, labels, (0, 0, 0))
-# #ax_seg.imshow(seg[:,:]) #remove it later
-# ax_seg.imshow(segments)
-# ax_seg.imshow(out)
-# ax_graph.imshow(blank_image)
+fig, (ax_img, ax_slic, ax_seg,ax_graph) = plt.subplots(1, 4, figsize = (36, 12))
+ax_img.imshow(image)
+ax_slic.imshow(segments)#, cmap = plt.cm.BrBG)
+ax_slic.imshow(image)
+out = color.label2rgb(segments, image, kind='avg', bg_label=0)
+#out = segmentation.mark_boundaries(out, labels, (0, 0, 0))
+#ax_seg.imshow(seg[:,:]) #remove it later
+ax_seg.imshow(segments)
+ax_seg.imshow(out)
+ax_graph.imshow(blank_image)
 
 pos_info = {c.label-1: np.array([c.centroid[1],c.centroid[0]]) for c in regionprops(segments+1)}
-# nx.draw(rag, pos = pos_info, ax = ax_slic,node_size=0.5)#, node_color='r', edge_color='b', alpha=0.5, width=1)
-# nx.draw(rag, pos = pos_info, ax = ax_seg,node_size=0.5, node_color='r', edge_color='b', alpha=0.5, width=0.2)
-# nx.draw(rag, pos = pos_info, ax = ax_graph, node_size = 0.5, edge_color='b', alpha=0.5, width=0.2)
-# plt.show()
+nx.draw(rag, pos = pos_info, ax = ax_slic,node_size=0.5)#, node_color='r', edge_color='b', alpha=0.5, width=1)
+nx.draw(rag, pos = pos_info, ax = ax_seg,node_size=0.5, node_color='r', edge_color='b', alpha=0.5, width=0.2)
+nx.draw(rag, pos = pos_info, ax = ax_graph, node_size = 0.5, edge_color='b', alpha=0.5, width=0.2)
+plt.show()
 # end of visualization part
+
 
 
 all_nodes_and_images = {}
@@ -58,6 +59,7 @@ for (i, segVal) in enumerate(np.unique(segments)):
     #print(i,segVal,pos_info[segVal])
     # show the masked region
     segimg = cv2.cvtColor(cv2.bitwise_and(image, image, mask = mask), cv2.COLOR_BGR2RGB)
+    segimg = cv2.bitwise_and(image, image, mask = mask)
 
     # this code is to remove background
     # gray = cv2.cvtColor(segimg, cv2.COLOR_BGR2GRAY)
@@ -95,7 +97,7 @@ for (i, segVal) in enumerate(np.unique(segments)):
 
     all_nodes_and_images[segVal] = seg
     rag2.nodes[segVal]['image'] = seg
-    G2.add_node(segVal,image= seg)
+    G2.add_node(segVal,image= segimg)
 
     # cv2.imwrite(f"output/person3/{segVal}.png")
     # cv2.imwrite(f"output/person3/{segVal}.png", segimg)
@@ -127,12 +129,16 @@ trans = ax.transData.transform
 trans2 = fig.transFigure.inverted().transform
 # trans2 = fig.transFigure.transform
 imsize = 0.05 # this is the image size
-for n in G.nodes():
+nodes = list(G.nodes())
+nodes = nodes[::-1]
+for n in nodes:
     (x,y) = pos[n]
     xx,yy = trans((x,y)) # figure coordinates
     xa,ya = trans2((xx,yy)) # axes coordinates
+    # xa,ya = xx,yy#trans2((xx,yy))
+    # xa,ya = x,y # axes coordinates
     a = plt.axes([xa-imsize/2.0,ya-imsize/2.0, imsize, imsize ])
-    a.imshow(G.nodes[n]['image'])
+    a.imshow(cv2.cvtColor(G.nodes[n]['image'], cv2.COLOR_BGR2RGB))
     a.set_aspect('equal')
     a.axis('off')
 plt.show()
