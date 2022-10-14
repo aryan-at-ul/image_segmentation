@@ -52,7 +52,7 @@ rag2 = rag.copy()
 G2 = nx.Graph()
 for (i, segVal) in enumerate(np.unique(segments)):
 	# construct a mask for the segment
-    print(f"[x] inspecting segment {i}")
+    print(f"inspecting segment {i}")
     mask = np.zeros(image.shape[:2], dtype = "uint8")
     mask[segments == segVal] = 255
     #print([[np.array([c.centroid[1],c.centroid[0]])]  for c in regionprops(mask)])
