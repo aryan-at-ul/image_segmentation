@@ -85,9 +85,9 @@ def dataloader():
     train_dataset = all_data[:int(len(all_data)*0.8)]
     val_dataset = all_data[int(len(all_data)*0.8):int(len(all_data)*0.8) + 100]
     test_dataset = all_data[int(len(all_data)*0.8):]
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True,drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False,drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=True,drop_last=True)
 
     return train_loader, test_loader, train_dataset, test_dataset, val_loader, val_dataset
 
@@ -110,7 +110,7 @@ class GCN(torch.nn.Module):
         self.conv1 = GCNConv(512, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)
         self.conv3 = GCNConv(hidden_channels, hidden_channels)
-        self.lin = Linear(hidden_channels, 1)
+        self.lin = Linear(hidden_channels, 2)
 
     def forward(self, x, edge_index, batch):
         # 1. Obtain node embeddings 
@@ -141,12 +141,20 @@ def train():
     model.train()
 
     for data in train_loader:  # Iterate in batches over the training dataset.
-         out = model(data.x, data.edge_index, data.batch)  # Perform a single forward pass.
-         data.y = torch.Tensor(data.y)
-         loss = criterion(out, data.y)  # Compute the loss.
-         loss.backward()  # Derive gradients.
-         optimizer.step()  # Update parameters based on gradients.
-         optimizer.zero_grad()  # Clear gradients.
+        print('^^^^^'*10)
+        
+        out = model(data.x, data.edge_index, data.batch)  # Perform a single forward pass.
+        data.y = torch.Tensor(data.y)
+        data.y = torch.Tensor(torch.flatten(data.y))
+        data.y = data.y.type(torch.LongTensor)
+        # print(data.y,"kjhkjdhsfkjhsdkjfhksjdhfkjsdhkjfhsdkjhfjs")
+        # print(out,"dsjflkdsjlfkjsdlkfjlkdsjflksdjlfkjsdlkjlkj")
+        loss = criterion(out, data.y)
+        print(loss.item())
+        # loss = F.nll_loss(out, data.y)
+        loss.backward()  # Derive gradients.
+        optimizer.step()  # Update parameters based on gradients.
+        optimizer.zero_grad()  # Clear gradients.
 
 def test(loader):
      model.eval()
@@ -155,13 +163,15 @@ def test(loader):
      for data in loader:  # Iterate in batches over the training/test dataset.
          out = model(data.x, data.edge_index, data.batch)  
          data.y = torch.Tensor(data.y)
+         print("==="*10)
+         print(data)
          pred = out.argmax(dim=1).view(-1,1)  # Use the class with highest probability.
         #  print(pred,"pred here",data.y)
          correct += int((pred == data.y).sum())  # Check against ground-truth labels.
      return correct / len(loader.dataset)  # Derive ratio of correct predictions.
 
 
-for epoch in range(1, 100):
+for epoch in range(1, 5):
     train()
     try:
         train_acc = test(train_loader)
@@ -169,3 +179,5 @@ for epoch in range(1, 100):
         print(f'Epoch: {epoch:03d}, Train Acc: {train_acc:.4f}, Test Acc: {test_acc:.4f}')
     except:
         pass
+
+print("number of paramteres for this model",sum(p.numel() for p in model.parameters()))
