@@ -135,18 +135,18 @@ def make_graph_from_image(image,dirs_names,class_name,data_typ,image_name):
             break
         seg = cv2.cvtColor(seg, cv2.COLOR_BGR2RGB)
         rag.nodes[segVal]['image'] = seg
-        seg_imgs.append(seg)
+        seg_imgs.append([seg,segVal])
         # G2.add_node(segVal,x = fet_from_img(seg))
         # G2.add_node(segVal,image= seg)
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         # Start the load operations and mark each future with its URL
-        futures = [executor.submit(fet_from_img, seg_img, i)  for  i,seg_img in enumerate(seg_imgs)]
+        futures = [executor.submit(fet_from_img, seg_img[0], seg_img[1])  for  i,seg_img in enumerate(seg_imgs)]
         for future in concurrent.futures.as_completed(futures):
             # fut = futures[future]
             # print("this result here",future)
             try:
                 img_fet,i = future.result()
-                print("this result here",img_fet,i)
+                # print("this result here",img_fet[0],i)
                 G2.add_node(i,x = img_fet)
             except Exception as exc:
                 print(f'generated an exception: {exc} for seg {i}')
@@ -198,8 +198,8 @@ def run_for_one_folder(folder_path):
         start = time.time()
         print(f"processing {class_name} {data_typ} {image_name}")
         make_dirs(f"{current_file_path}/chest_xray_graphs/{data_typ}/{class_name}")
-        # if image_name.split('.')[-2] + ".gpickle" in os.listdir(f"{current_file_path}/chest_xray_graphs/{data_typ}/{class_name}"):
-        #     continue
+        if image_name.split('.')[-2] + ".gpickle" in os.listdir(f"{current_file_path}/chest_xray_graphs/{data_typ}/{class_name}"):
+            continue
         image = read_one_image(one)
         print("="*50)
         G,segments = make_graph_from_image(image,dirs_names,class_name,data_typ,image_name)
