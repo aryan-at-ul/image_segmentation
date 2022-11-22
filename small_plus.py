@@ -42,6 +42,7 @@ def load_all_from_one_folder(path,type = 0):
     k = 0
     for one_g in all_files[0:1000]:
         print(one_g)
+        name = one_g.split(".")[0]
         G = nx.read_gpickle(f"{path}/{one_g}")
         data = from_networkx(G)
 
@@ -52,6 +53,7 @@ def load_all_from_one_folder(path,type = 0):
         k+= 1
 
         data.x = torch.Tensor([torch.flatten(val).tolist() for val in data.x])#nx.get_node_attributes(G,'image')
+        data.name = name
         # data.x = data.x.type(torch.LongTensor)
         print(k,data)
         all_data.append(data)
